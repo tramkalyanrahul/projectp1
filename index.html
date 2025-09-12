@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Onion Storage - IoT Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Login Page Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.8s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Dashboard Styles */
+        .dashboard {
+            display: none;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #27ae60;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .logout-btn {
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-color);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-card.temperature { --accent-color: #e74c3c; }
+        .stat-card.humidity { --accent-color: #3498db; }
+        .stat-card.pressure { --accent-color: #9b59b6; }
+        .stat-card.air-quality { --accent-color: #27ae60; }
+        
+        .stat-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            color: var(--accent-color);
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-trend {
+            margin-top: 10px;
+            font-size: 0.9em;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .trend-up { background: #d5f4e6; color: #27ae60; }
+        .trend-down { background: #ffeaea; color: #e74c3c; }
+        .trend-stable { background: #e3f2fd; color: #2196f3; }
+        
+        .controls-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+        
+        .controls-section h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .control-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: #27ae60;
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-switch.active::after {
+            left: 33px;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+        }
+        
+        .chart-container h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .chart {
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+            font-size: 1.2em;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chart-placeholder {
+            text-align: center;
+        }
+        
+        .alerts-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .alerts-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .alert-success { background: #d5f4e6; border-left: 4px solid #27ae60; }
+        .alert-warning { background: #fff3cd; border-left: 4px solid #f39c12; }
+        .alert-danger { background: #ffeaea; border-left: 4px solid #e74c3c; }
+        
+        .alert-icon {
+            margin-right: 15px;
+            font-size: 1.5em;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .alert-time {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .mobile-menu {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🧅 Smart Storage</h1>
+                <p>IoT-Enabled Onion Storage Monitoring</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <span id="loginText">Login</span>
+                    <span id="loginLoader" class="loading" style="display: none;"></span>
+                </button>
+                <div id="errorMessage" style="display: none; margin-top: 15px; padding: 12px; background: #ffeaea; border: 1px solid #e74c3c; border-radius: 8px; color: #c0392b; text-align: center; font-weight: 600;">
+                    Invalid username or password. Please try again.
+                </div>
+            </form>
+            <div style="margin-top: 20px; text-align: center; color: #7f8c8d; font-size: 0.9em;">
+                <p>Demo Credentials:</p>
+                <p><strong>Username:</strong> admin | <strong>Password:</strong> admin123</p>
+                <p><strong>Username:</strong> farmer | <strong>Password:</strong> farmer123</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard">
+        <div class="container">
+            <!-- Header -->
+            <div class="header">
+                <h1>
+                    <span class="status-indicator"></span>
+                    Smart Onion Storage Dashboard
+                </h1>
+                <div class="user-info">
+                    <span id="currentTime"></span>
+                    <span>Welcome, <strong id="currentUser"></strong></span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card temperature">
+                    <div class="stat-icon">🌡</div>
+                    <div class="stat-value" id="temperature">24.5°C</div>
+                    <div class="stat-label">Temperature</div>
+                    <div class="stat-trend trend-stable">Optimal Range</div>
+                </div>
+                
+                <div class="stat-card humidity">
+                    <div class="stat-icon">💧</div>
+                    <div class="stat-value" id="humidity">68%</div>
+                    <div class="stat-label">Humidity</div>
+                    <div class="stat-trend trend-up">+2% from yesterday</div>
+                </div>
+                
+                <div class="stat-card pressure">
+                    <div class="stat-icon">🌪</div>
+                    <div class="stat-value" id="pressure">1013</div>
+                    <div class="stat-label">Pressure (hPa)</div>
+                    <div class="stat-trend trend-stable">Normal</div>
+                </div>
+                
+                <div class="stat-card air-quality">
+                    <div class="stat-icon">🍃</div>
+                    <div class="stat-value" id="airQuality">Good</div>
+                    <div class="stat-label">Air Quality</div>
+                    <div class="stat-trend trend-stable">No issues</div>
+                </div>
+            </div>
+
+            <!-- Controls Section -->
+            <div class="controls-section">
+                <h2>🎛 Device Controls</h2>
+                <div class="controls-grid">
+                    <div class="control-item">
+                        <span class="control-label">Cooling Fan</span>
+                        <div class="toggle-switch active" onclick="toggleDevice(this, 'fan')"></div>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-label">Peltier Cooler</span>
+                        <div class="toggle-switch" onclick="toggleDevice(this, 'peltier')"></div>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-label">Heating Element</span>
+                        <div class="toggle-switch" onclick="toggleDevice(this, 'heater')"></div>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-label">Exhaust Fan</span>
+                        <div class="toggle-switch" onclick="toggleDevice(this, 'exhaust')"></div>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-label">Auto Mode</span>
+                        <div class="toggle-switch active" onclick="toggleDevice(this, 'auto')"></div>
+                    </div>
+                    <div class="control-item">
+                        <span class="control-label">Alerts</span>
+                        <div class="toggle-switch active" onclick="toggleDevice(this, 'alerts')"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="chart-container">
+                <h2>📊 24-Hour Trend</h2>
+                <div class="chart">
+                    <div class="chart-placeholder">
+                        <div>📈</div>
+                        <div>Real-time sensor data chart</div>
+                        <div style="font-size: 0.9em; margin-top: 10px;">Temperature and Humidity trends over time</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div class="alerts-section">
+                <h2>🔔 Recent Alerts & Notifications</h2>
+                <div id="alertsContainer">
+                    <div class="alert-item alert-success">
+                        <div class="alert-icon">✅</div>
+                        <div class="alert-content">
+                            <div class="alert-title">System Status: Normal</div>
+                            <div class="alert-time">All sensors functioning properly - 2 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="alert-item alert-warning">
+                        <div class="alert-icon">⚠</div>
+                        <div class="alert-content">
+                            <div class="alert-title">Humidity Level Alert</div>
+                            <div class="alert-time">Humidity reached 72% - Auto exhaust activated - 15 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="alert-item alert-success">
+                        <div class="alert-icon">❄</div>
+                        <div class="alert-content">
+                            <div class="alert-title">Cooling System Activated</div>
+                            <div class="alert-time">Temperature control engaged - 1 hour ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // User credentials (In production, this should be handled server-side)
+        const users = {
+            'admin': { password: 'admin123', role: 'Administrator' },
+            'farmer': { password: 'farmer123', role: 'Farmer' }
+        };
+
+        // Current user
+        let currentUser = null;
+
+        // Device states
+        let deviceStates = {
+            fan: true,
+            peltier: false,
+            heater: false,
+            exhaust: false,
+            auto: true,
+            alerts: true
+        };
+
+        // Sensor data simulation
+        let sensorData = {
+            temperature: 24.5,
+            humidity: 68,
+            pressure: 1013,
+            airQuality: 'Good'
+        };
+
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginText = document.getElementById('loginText');
+            const loginLoader = document.getElementById('loginLoader');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Hide error message and show loading
+            errorMessage.style.display = 'none';
+            loginText.style.display = 'none';
+            loginLoader.style.display = 'inline-block';
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                if (users[username] && users[username].password === password) {
+                    // Successful login
+                    currentUser = { username, role: users[username].role };
+                    document.getElementById('currentUser').textContent = username;
+                    document.getElementById('loginPage').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    startRealTimeUpdates();
+                } else {
+                    // Failed login
+                    errorMessage.style.display = 'block';
+                    loginText.style.display = 'inline';
+                    loginLoader.style.display = 'none';
+                }
+            }, 1500);
+        });
+
+        // Logout functionality
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginText').style.display = 'inline';
+            document.getElementById('loginLoader').style.display = 'none';
+            stopRealTimeUpdates();
+        }
+
+        // Toggle device state
+        function toggleDevice(element, device) {
+            element.classList.toggle('active');
+            deviceStates[device] = !deviceStates[device];
+            
+            // Add visual feedback
+            element.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                element.style.transform = 'scale(1)';
+            }, 150);
+            
+            // Simulate API call to ESP32
+          console.log(`Device ${device} turned ${deviceStates[device] ? 'ON' : 'OFF'}`);
+
+// Add alert for device state change
+addAlert(`Device Control: ${device.charAt(0).toUpperCase() + device.slice(1)} ${deviceStates[device] ? 'activated' : 'deactivated'}`, 'success');
+        }
+
+        // Add alert to the alerts container
+        function addAlert(message, type) {
+            const alertsContainer = document.getElementById('alertsContainer');
+            const alertItem = document.createElement('div');
+            alertItem.className = `alert-item alert-${type}`;
+            
+            const iconMap = {
+                'success': '✅',
+                'warning': '⚠',
+                'danger': '❌'
+            };
+            
+            alertItem.innerHTML = `
+                <div class="alert-icon">${iconMap[type]}</div>
+                <div class="alert-content">
+                    <div class="alert-title">${message}</div>
+                    <div class="alert-time">Just now</div>
+                </div>
+            `;
+            
+            alertsContainer.insertBefore(alertItem, alertsContainer.firstChild);
+            
+            // Remove old alerts (keep only 5)
+            while (alertsContainer.children.length > 5) {
+                alertsContainer.removeChild(alertsContainer.lastChild);
+            }
+        }
+
+        // Simulate real-time sensor data updates
+        let updateInterval;
+        
+        function startRealTimeUpdates() {
+            updateCurrentTime();
+            updateInterval = setInterval(() => {
+                updateSensorData();
+                updateCurrentTime();
+            }, 3000); // Update every 3 seconds
+        }
+        
+        function stopRealTimeUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        }
+        
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('en-IN', {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        
+        function updateSensorData() {
+            // Simulate realistic sensor data variations
+            sensorData.temperature += (Math.random() - 0.5) * 2;
+            sensorData.humidity += (Math.random() - 0.5) * 4;
+            sensorData.pressure += (Math.random() - 0.5) * 10;
+            
+            // Keep values in realistic ranges
+            sensorData.temperature = Math.max(0, Math.min(40, sensorData.temperature));
+            sensorData.humidity = Math.max(30, Math.min(90, sensorData.humidity));
+            sensorData.pressure = Math.max(990, Math.min(1030, sensorData.pressure));
+            
+            // Update display
+            document.getElementById('temperature').textContent = sensorData.temperature.toFixed(1) + '°C';
+            document.getElementById('humidity').textContent = Math.round(sensorData.humidity) + '%';
+            document.getElementById('pressure').textContent = Math.round(sensorData.pressure);
+            
+            // Check for alerts
+            if (sensorData.temperature > 30) {
+                addAlert('High Temperature Alert: ' + sensorData.temperature.toFixed(1) + '°C detected', 'warning');
+            }
+            
+            if (sensorData.humidity > 75) {
+                addAlert('High Humidity Alert: ' + Math.round(sensorData.humidity) + '% detected', 'warning');
+            }
+            
+            if (sensorData.temperature < 5) {
+                addAlert('Low Temperature Alert: ' + sensorData.temperature.toFixed(1) + '°C detected', 'danger');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Focus on username field
+            document.getElementById('username').focus();
+            
+            // Add enter key support for login
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                }
+            });
+        });
+
+        // Simulate ESP32 WebSocket connection (In production, connect to actual ESP32)
+        function simulateWebSocketConnection() {
+            // This would connect to your ESP32's WebSocket server
+            // const ws = new WebSocket('ws://192.168.1.100:81/');
+            
+            // ws.onmessage = function(event) {
+            //     const data = JSON.parse(event.data);
+            //     updateSensorData(data);
+            // };
+            
+            console.log('WebSocket connection simulation active');
+        }
+
+        // API functions for ESP32 communication (examples)
+        function sendCommand(device, state) {
+            // In production, send HTTP request to ESP32
+            // fetch(http://192.168.1.100/api/device/${device}, {
+            //     method: 'POST',
+            //     headers: { 'Content-Type': 'application/json' },
+            //     body: JSON.stringify({ state: state })
+            // });
+            
+            console.log(`API Call: ${device} -> ${state}`);
+        }
+
+        function getDeviceStatus() {
+            // In production, fetch current device states from ESP32
+            // fetch('http://192.168.1.100/api/status')
+            //     .then(response => response.json())
+            //     .then(data => updateDeviceStates(data));
+            
+            console.log('Device status check');
+        }
+    </script>
+</body>
+</html>
